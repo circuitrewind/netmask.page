@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network Mask</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #1a1a2e;
+    color: #e0e0e0;
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    flex-direction: column;
+    padding: 2vw;
+    overflow-x: hidden;
+  }
+
+  h2 {
+    margin: 1em 0 0.5em 0;
+    font-size: clamp(20px, 3vw, 60px);
+    letter-spacing: 0.1em;
+    color: #00d4ff;
+    text-transform: uppercase;
+    text-shadow: 0 0 clamp(8px, 1vw, 20px) rgba(0, 212, 255, 0.4);
+  }
+
+  .ip-input-section {
+    margin-bottom: 3vh;
+    display: flex;
+    align-items: center;
+    gap: 2vw;
+  }
+
+  .ip-input-label {
+    font-size: clamp(14px, 1.5vw, 20px);
+    color: #aaa;
+    text-align: right;
+  }
+
+  .ip-input {
+    background: #16213e;
+    border: 0.15vw solid #444;
+    border-radius: 0.5vw;
+    color: #e0e0e0;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: clamp(14px, 1.5vw, 20px);
+    padding: clamp(6px, 1vh, 12px) clamp(10px, 1.5vw, 20px);
+    outline: none;
+    width: clamp(140px, 20vw, 300px);
+    text-align: center;
+  }
+
+  .ip-input:focus {
+    border-color: #00d4ff;
+  }
+
+  .mask-container {
+    display: flex;
+    gap: 1vw;
+    width: 100%;
+  }
+
+  .group {
+    display: flex;
+    gap: 0.3vw;
+    flex: 1;
+  }
+
+  .bit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.5vw;
+    height:4vw;
+    border: 0.1vw solid #333;
+    border-radius: 0.5vw;
+    background: #16213e;
+    color: #555;
+    transition: all 0.2s ease;
+    flex: 1;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+
+  .bit.active {
+    background: #0f3460;
+    border-color: #00d4ff;
+    color: #00d4ff;
+    box-shadow: 0 0 clamp(6px, 1vw, 15px) rgba(0, 212, 255, 0.3);
+  }
+
+  .bit.host {
+    background: #2d2b1e;
+    border-color: #ff9800;
+    color: #ff9800;
+    box-shadow: 0 0 clamp(4px, 0.5vw, 10px) rgba(255, 152, 0, 0.3);
+  }
+
+  .bit.host.active {
+    background: #3d3b2e;
+    border-color: #ffb74d;
+    color: #ffb74d;
+    box-shadow: 0 0 clamp(6px, 1vw, 15px) rgba(255, 152, 0, 0.3);
+  }
+
+  .bit.question {
+    color: #888;
+  }
+
+  .bit.mask-zero {
+    background: #2d1b4e;
+    border-color: #c77dff;
+    color: #c77dff;
+    box-shadow: 0 0 clamp(4px, 0.5vw, 10px) rgba(199, 125, 255, 0.3);
+  }
+
+  .bit.network {
+    background: #1b2d1e;
+    border-color: #4caf50;
+    color: #4caf50;
+    box-shadow: 0 0 clamp(4px, 0.5vw, 10px) rgba(76, 175, 80, 0.3);
+  }
+
+  .bit.network.active {
+    background: #2b3d2e;
+    border-color: #6cfc70;
+    color: #6cfc70;
+    box-shadow: 0 0 clamp(6px, 1vw, 15px) rgba(76, 175, 80, 0.3);
+  }
+
+  .group-separator {
+    width: 1vw;
+    flex-shrink: 0;
+  }
+
+  .slider-section {
+    display: flex;
+    align-items: center;
+    gap: 2vw;
+    width: 100%;
+  }
+
+  .slider-value {
+    font-size: clamp(16px, 2vw, 40px);
+    color: #ff9800;
+    font-weight: bold;
+    text-shadow: 0 0 clamp(8px, 1vw, 20px) rgba(255, 152, 0, 0.4);
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 1vw;
+    background: #16213e;
+    border-radius: 0.5vw;
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 3vw;
+    height: 3vw;
+    background: #00d4ff;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 clamp(6px, 1vw, 15px) rgba(0, 212, 255, 0.5);
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 3vw;
+    height: 3vw;
+    background: #00d4ff;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 clamp(6px, 1vw, 15px) rgba(0, 212, 255, 0.5);
+  }
+
+  .info {
+    margin-top: 2vw;
+    font-size: clamp(10px, 1.2vw, 24px);
+    color: #666;
+    text-align: center;
+  }
+
+  .notation-row {
+    margin: 1em 0 1em 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 clamp(16px, 3vw, 48px);
+    width: 100%;
+  }
+
+  .label {
+    font-weight: bold;
+    font-size: clamp(16px, 2vw, 50px);
+    text-shadow: 0 0 clamp(8px, 1vw, 20px) var(--glow-color);
+  }
+
+  .notation { color: #00d4ff; --glow-color: rgba(0, 212, 255, 0.4); }
+  .cidr-label { color: #c77dff; --glow-color: rgba(199, 125, 255, 0.4); }
+  .net-label { color: #4caf50; --glow-color: rgba(76, 175, 80, 0.4); }
+  .host-label { color: #ff9800; --glow-color: rgba(255, 152, 0, 0.4); }
+
+  .network-info {
+    margin-top: 1vh;
+    font-size: clamp(12px, 1.5vw, 30px);
+    color: #aaa;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 clamp(16px, 3vw, 48px);
+    width: 100%;
+  }
+
+  .network-info span {
+    margin: 0;
+  }
+
+  
+  @media (max-width: 600px) {
+    .slider-section, .ip-input-section {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h2>IP Address</h2>
+<div class="ip-input-section">
+  <input type="text" class="ip-input" id="ipInput" value="192.168.1.1">
+</div>
+
+<div class="mask-container" id="ipBitContainer"></div>
+<div class="network-info" id="networkInfo"></div>
+
+
+<h2>Network Mask</h2>
+<div class="mask-container" id="maskContainer"></div>
+<div class="notation-row">
+  <span class="label notation" id="notation">Netmask: 255.255.255.0</span>
+  <span class="label cidr-label" id="sliderValue">CIDR: /24</span>
+</div>
+
+<div class="slider-section">
+  <input type="range" id="maskSlider" min="0" max="32" value="24">
+</div>
+
+<div class="info">Drag the slider to set the network mask length (0–32)</div>
+
+<script>
+  const container = document.getElementById('maskContainer');
+  const ipBitContainer = document.getElementById('ipBitContainer');
+  const slider = document.getElementById('maskSlider');
+  const notationEl = document.getElementById('notation');
+  const valueDisplay = document.getElementById('sliderValue');
+  const networkInfoEl = document.getElementById('networkInfo');
+  const ipInput = document.getElementById('ipInput');
+
+  // Build mask bits (32 in groups of 8)
+  for (let g = 0; g < 4; g++) {
+    const group = document.createElement('div');
+    group.className = 'group';
+    for (let b = 0; b < 8; b++) {
+      const bit = document.createElement('div');
+      bit.className = 'bit';
+      bit.id = 'mask-bit-' + (g * 8 + b);
+      group.appendChild(bit);
+    }
+    container.appendChild(group);
+    if (g < 3) {
+      const sep = document.createElement('div');
+      sep.className = 'group-separator';
+      container.appendChild(sep);
+    }
+  }
+
+  // Build IP bits (32 in groups of 8)
+  for (let g = 0; g < 4; g++) {
+    const group = document.createElement('div');
+    group.className = 'group';
+    for (let b = 0; b < 8; b++) {
+      const bit = document.createElement('div');
+      bit.className = 'bit';
+      bit.id = 'ip-bit-' + (g * 8 + b);
+      group.appendChild(bit);
+    }
+    ipBitContainer.appendChild(group);
+    if (g < 3) {
+      const sep = document.createElement('div');
+      sep.className = 'group-separator';
+      ipBitContainer.appendChild(sep);
+    }
+  }
+
+  function parsePartialIP(ip) {
+    // Returns an array of exactly 32 bits, where -1 means unknown/?
+    const parts = ip.split('.').map(p => p.trim()).filter(p => p.length > 0);
+
+    if (parts.length === 0) return null;
+
+    const bits = [];
+    for (const part of parts) {
+      if (bits.length >= 32) break;
+
+      const num = parseInt(part, 10);
+      if (isNaN(num)) return null; // non-numeric like "abc"
+
+      if (num < 0 || num > 255) {
+        // Out of range — entire octet is unknown
+        for (let i = 0; i < 8 && bits.length < 32; i++) {
+          bits.push(-1); // -1 = unknown/?
+        }
+      } else {
+        for (let i = 7; i >= 0 && bits.length < 32; i--) {
+          bits.push((num >> i) & 1);
+        }
+      }
+    }
+
+    // Pad remaining bits with -1 (unknown)
+    while (bits.length < 32) {
+      bits.push(-1);
+    }
+
+    return { bits };
+  }
+
+  function octetsToIP(octets) {
+    return octets.join('.');
+  }
+
+  function bitsToIP(bits, maskBits) {
+    // maskBits: same length array where -1 means "don't include this bit"
+    const octets = [];
+    for (let o = 0; o < 4; o++) {
+      let val = 0;
+      for (let b = 0; b < 8; b++) {
+        const idx = o * 8 + b;
+        if (maskBits[idx] !== -1) {
+          val |= (bits[idx] << (7 - b));
+        }
+      }
+      octets.push(val);
+    }
+    return octetsToIP(octets);
+  }
+
+  function updateMask(val) {
+    // Update mask bits
+    for (let i = 0; i < 32; i++) {
+      const bit = document.getElementById('mask-bit-' + i);
+      if (i < val) {
+        bit.textContent = '1';
+        bit.classList.add('active');
+      } else {
+        bit.textContent = '0';
+        bit.classList.remove('active');
+      }
+
+      // Mark host bits (bits beyond the mask) — orange for 0s in mask row
+      if (i >= val) {
+        bit.classList.add('host');
+        bit.classList.add('mask-zero');
+      } else {
+        bit.classList.remove('host');
+        bit.classList.remove('mask-zero');
+      }
+    }
+
+    // Update IP bits
+    const partial = parsePartialIP(ipInput.value);
+    if (partial) {
+      for (let i = 0; i < 32; i++) {
+        const bit = document.getElementById('ip-bit-' + i);
+        if (partial.bits[i] === -1) {
+          bit.textContent = '?';
+          bit.classList.add('question');
+          bit.classList.remove('host');
+          bit.classList.remove('network');
+        } else {
+          bit.textContent = partial.bits[i];
+          bit.classList.remove('question');
+
+          if (i >= val) {
+            bit.classList.add('host');
+            bit.classList.remove('network');
+          } else {
+            bit.classList.add('network');
+            bit.classList.remove('host');
+          }
+        }
+      }
+
+      // Build the mask bit array (1s for network, 0s for host)
+      const maskBits = [];
+      for (let i = 0; i < 32; i++) {
+        maskBits.push(i < val ? 1 : 0);
+      }
+
+      // Network = IP AND mask, Host = IP AND NOT mask (skip -1 bits)
+      const netBits = [];
+      const hostBits = [];
+      for (let i = 0; i < partial.bits.length; i++) {
+        if (partial.bits[i] === -1) {
+          netBits.push(-1);
+          hostBits.push(-1);
+        } else {
+          netBits.push(partial.bits[i] & maskBits[i]);
+          hostBits.push(partial.bits[i] & (1 - maskBits[i]));
+        }
+      }
+
+      // Show the netmask (all 1s for network bits, all 0s for host bits)
+      const maskOctets = [];
+      for (let o = 0; o < 4; o++) {
+        let maskByte = 0;
+        for (let b = 0; b < 8; b++) {
+          const bitIndex = o * 8 + b;
+          if (bitIndex < val) {
+            maskByte |= (1 << (7 - b));
+          }
+        }
+        maskOctets.push(maskByte);
+      }
+
+      notationEl.textContent = 'Netmask: ' + octetsToIP(maskOctets);
+
+      networkInfoEl.innerHTML =
+        '<span class="label net-label">Network: ' + bitsToIP(netBits, netBits) + '</span>' +
+        '<span class="label host-label">Host: ' + bitsToIP(hostBits, hostBits) + '</span>';
+    } else {
+      // Nothing parseable — show ? for all bits
+      for (let i = 0; i < 32; i++) {
+        const bit = document.getElementById('ip-bit-' + i);
+        bit.textContent = '?';
+        bit.classList.add('question');
+      }
+      notationEl.textContent = '—';
+      networkInfoEl.innerHTML = '';
+    }
+
+    valueDisplay.textContent = 'CIDR: /' + val;
+  }
+
+  slider.addEventListener('input', function() {
+    updateMask(parseInt(this.value));
+  });
+
+  ipInput.addEventListener('input', function() {
+    updateMask(parseInt(slider.value));
+  });
+
+  // Initialize — read actual slider value (browser may have restored a different position)
+  updateMask(parseInt(slider.value));
+</script>
+
+</body>
+</html>
