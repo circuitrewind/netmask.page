@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Interactive network mask calculator — visualize IP addresses and CIDR notation in binary.">
 <title>Network Mask</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -102,13 +103,6 @@
     border-color: #ff9800;
     color: #ff9800;
     box-shadow: 0 0 clamp(4px, 0.5vw, 10px) rgba(255, 152, 0, 0.3);
-  }
-
-  .bit.host.active {
-    background: #3d3b2e;
-    border-color: #ffb74d;
-    color: #ffb74d;
-    box-shadow: 0 0 clamp(6px, 1vw, 15px) rgba(255, 152, 0, 0.3);
   }
 
   .bit.question {
@@ -227,20 +221,13 @@
     margin: 0;
   }
 
-  
-  @media (max-width: 600px) {
-    .slider-section, .ip-input-section {
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-  }
 </style>
 </head>
 <body>
 
 <h2>IP Address</h2>
 <div class="ip-input-section">
-  <input type="text" class="ip-input" id="ipInput" value="192.168.1.1">
+  <input type="text" class="ip-input" id="ipInput" value="192.168.1.1" aria-label="IP address">
 </div>
 
 <div class="mask-container" id="ipBitContainer"></div>
@@ -255,10 +242,10 @@
 </div>
 
 <div class="slider-section">
-  <input type="range" id="maskSlider" min="0" max="32" value="24">
+  <input type="range" id="maskSlider" min="0" max="32" value="24" role="slider" aria-label="CIDR mask length" aria-valuemin="0" aria-valuemax="32" aria-valuenow="24">
 </div>
 
-<div class="info">Drag the slider to set the network mask length (0–32)</div>
+  <div class="info" role="note">Drag the slider to set the network mask length (0–32)</div>
 
 <script>
   const container = document.getElementById('maskContainer');
@@ -273,10 +260,12 @@
   for (let g = 0; g < 4; g++) {
     const group = document.createElement('div');
     group.className = 'group';
+    group.setAttribute('role', 'presentation');
     for (let b = 0; b < 8; b++) {
       const bit = document.createElement('div');
       bit.className = 'bit';
       bit.id = 'mask-bit-' + (g * 8 + b);
+      bit.setAttribute('role', 'img');
       group.appendChild(bit);
     }
     container.appendChild(group);
@@ -291,10 +280,12 @@
   for (let g = 0; g < 4; g++) {
     const group = document.createElement('div');
     group.className = 'group';
+    group.setAttribute('role', 'presentation');
     for (let b = 0; b < 8; b++) {
       const bit = document.createElement('div');
       bit.className = 'bit';
       bit.id = 'ip-bit-' + (g * 8 + b);
+      bit.setAttribute('role', 'img');
       group.appendChild(bit);
     }
     ipBitContainer.appendChild(group);
@@ -453,18 +444,39 @@
     }
 
     valueDisplay.textContent = 'CIDR: /' + val;
+
+    // Update slider aria-valuenow
+    slider.setAttribute('aria-valuenow', val);
+
+    // Update bit aria-labels to reflect current values
+    for (let i = 0; i < 32; i++) {
+      const maskBit = document.getElementById('mask-bit-' + i);
+      if (maskBit) {
+        maskBit.setAttribute('aria-label', 'Mask bit ' + i + ': ' + (i < val ? '1' : '0'));
+      }
+    }
+
+    const ipBits = parsePartialIP(ipInput.value);
+    if (ipBits) {
+      for (let i = 0; i < 32; i++) {
+        const ipBit = document.getElementById('ip-bit-' + i);
+        if (ipBit) {
+          ipBit.setAttribute('aria-label', 'IP bit ' + i + ': ' + (ipBits.bits[i] === -1 ? '?' : ipBits.bits[i]));
+        }
+      }
+    }
   }
 
   slider.addEventListener('input', function() {
-    updateMask(parseInt(this.value));
+    updateMask(Math.max(0, Math.min(32, parseInt(this.value) || 24)));
   });
 
   ipInput.addEventListener('input', function() {
-    updateMask(parseInt(slider.value));
+    updateMask(Math.max(0, Math.min(32, parseInt(slider.value) || 24)));
   });
 
   // Initialize — read actual slider value (browser may have restored a different position)
-  updateMask(parseInt(slider.value));
+  updateMask(Math.max(0, Math.min(32, parseInt(slider.value) || 24)));
 </script>
 
 </body>
