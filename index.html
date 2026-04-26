@@ -15,11 +15,11 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
     flex-direction: column;
-    padding: 2vw;
+    padding: 0 2vw 1em 2vw;
     overflow-x: hidden;
   }
+
 
   h2 {
     margin: 1em 0 0.5em 0;
@@ -31,7 +31,7 @@
   }
 
   .ip-input-section {
-    margin-bottom: 3vh;
+    margin-bottom: 2em;
     display: flex;
     align-items: center;
     gap: 2vw;
@@ -50,9 +50,9 @@
     color: #e0e0e0;
     font-family: 'Courier New', Courier, monospace;
     font-size: clamp(14px, 1.5vw, 20px);
-    padding: clamp(6px, 1vh, 12px) clamp(10px, 1.5vw, 20px);
+    padding: 0.5em 2em;
     outline: none;
-    width: clamp(140px, 20vw, 300px);
+    width: 18em;
     text-align: center;
   }
 
@@ -188,37 +188,32 @@
     text-align: center;
   }
 
-  .notation-row {
-    margin: 1em 0 1em 0;
+  .label-row {
+    margin: 0.5em 0 1em 0;
     display: flex;
     justify-content: space-between;
-    padding: 0 clamp(16px, 3vw, 48px);
-    width: 100%;
-  }
-
-  .label {
+    padding: 0 1em;
+    width: 100%;    
+    display: flex;
     font-weight: bold;
     font-size: clamp(16px, 2vw, 50px);
-    text-shadow: 0 0 clamp(8px, 1vw, 20px) var(--glow-color);
   }
 
-  .notation { color: #00d4ff; --glow-color: rgba(0, 212, 255, 0.4); }
-  .cidr-label { color: #c77dff; --glow-color: rgba(199, 125, 255, 0.4); }
-  .net-label { color: #4caf50; --glow-color: rgba(76, 175, 80, 0.4); }
-  .host-label { color: #ff9800; --glow-color: rgba(255, 152, 0, 0.4); }
+  .notation { color: #00d4ff; text-shadow: 0 0 0.2em rgba(0, 212, 255, 0.4); }
+  .cidr-label { color: #c77dff; text-shadow: 0 0 0.2em rgba(199, 125, 255, 0.4); }
+  .net-label { color: #4caf50; text-shadow: 0 0 0.2em rgba(76, 175, 80, 0.4); }
+  .host-label { color: #ff9800; text-shadow: 0 0 0.2em rgba(255, 152, 0, 0.4); }
 
-  .network-info {
-    margin-top: 1vh;
-    font-size: clamp(12px, 1.5vw, 30px);
-    color: #aaa;
-    display: flex;
-    justify-content: space-between;
-    padding: 0 clamp(16px, 3vw, 48px);
-    width: 100%;
+  .source-link {
+    margin-top: 4vw;
+    font-size: clamp(10px, 1.2vw, 18px);
+    color: #444;
+    text-align: center;
   }
 
-  .network-info span {
-    margin: 0;
+  .source-link a {
+    color: #555;
+    text-decoration: underline;
   }
 
 </style>
@@ -229,14 +224,13 @@
 <div class="ip-input-section">
   <input type="text" class="ip-input" id="ipInput" value="192.168.1.1" aria-label="IP address">
 </div>
-
 <div class="mask-container" id="ipBitContainer"></div>
-<div class="network-info" id="networkInfo"></div>
+<div class="label-row" id="networkInfo"></div>
 
 
 <h2>Network Mask</h2>
 <div class="mask-container" id="maskContainer"></div>
-<div class="notation-row">
+<div class="label-row">
   <span class="label notation" id="notation">Netmask: 255.255.255.0</span>
   <span class="label cidr-label" id="sliderValue">CIDR: /24</span>
 </div>
@@ -246,6 +240,8 @@
 </div>
 
   <div class="info" role="note">Drag the slider to set the network mask length (0–32)</div>
+
+  <div class="source-link">Source code at <a href="https://github.com/circuitrewind/netmask.page/">github.com/circuitrewind/netmask.page</a></div>
 
 <script>
   const container = document.getElementById('maskContainer');
@@ -468,15 +464,15 @@
   }
 
   slider.addEventListener('input', function() {
-    updateMask(Math.max(0, Math.min(32, parseInt(this.value) || 24)));
+    updateMask(Math.max(0, Math.min(32, parseInt(this.value))));
   });
 
   ipInput.addEventListener('input', function() {
-    updateMask(Math.max(0, Math.min(32, parseInt(slider.value) || 24)));
+    updateMask(Math.max(0, Math.min(32, parseInt(slider.value))));
   });
 
   // Initialize — read actual slider value (browser may have restored a different position)
-  updateMask(Math.max(0, Math.min(32, parseInt(slider.value) || 24)));
+  updateMask(Math.max(0, Math.min(32, parseInt(slider.value))));
 </script>
 
 </body>
