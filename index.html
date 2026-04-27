@@ -91,7 +91,7 @@
     -ms-user-select: none;
   }
 
-  .bit.active {
+  .bit.mask-one {
     background: #0f3460;
     border-color: #00d4ff;
     color: #00d4ff;
@@ -123,7 +123,7 @@
     box-shadow: 0 0 clamp(4px, 0.5vw, 10px) rgba(76, 175, 80, 0.3);
   }
 
-  .bit.network.active {
+  .bit.network.mask-one {
     background: #2b3d2e;
     border-color: #6cfc70;
     color: #6cfc70;
@@ -224,92 +224,81 @@
 <div class="ip-input-section">
   <input type="text" class="ip-input" id="ipInput" value="192.168.1.1" aria-label="IP address">
 </div>
-<div class="mask-container" id="ipBitContainer"></div>
-<div class="label-row" id="networkInfo"></div>
+<div class="mask-container" id="ipBits"></div>
+<div class="label-row" id="networkInfo">
+  <span class="label net-label">Network: <span id="network">192.168.1.0</span></span>
+  <span class="label host-label">Host: <span id="host">0.0.0.1</span></span>
+</div>
 
 
 <h2>Network Mask</h2>
-<div class="mask-container" id="maskContainer"></div>
+<div class="mask-container" id="maskBits"></div>
 <div class="label-row">
-  <span class="label notation" id="notation">Netmask: 255.255.255.0</span>
-  <span class="label cidr-label" id="sliderValue">CIDR: /24</span>
+  <span class="label notation">Netmask: <span id="netmask">255.255.255.0</span></span>
+  <span class="label cidr-label">CIDR: /<span id="cidr">24</span></span>
 </div>
 
 <div class="slider-section">
-  <input type="range" id="maskSlider" min="0" max="32" value="24" role="slider" aria-label="CIDR mask length" aria-valuemin="0" aria-valuemax="32" aria-valuenow="24">
+  <input type="range" id="slider" min="0" max="32" value="24" role="slider" aria-label="CIDR mask length" aria-valuemin="0" aria-valuemax="32" aria-valuenow="24">
 </div>
 
-  <div class="info" role="note">Drag the slider to set the network mask length (0–32)</div>
+<div class="info" role="note">Drag the slider to set the network mask length (0–32)</div>
 
-  <div class="source-link">Source code at <a href="https://github.com/circuitrewind/netmask.page/">github.com/circuitrewind/netmask.page</a></div>
+<div class="source-link">
+  Source code at
+  <a href="https://github.com/circuitrewind/netmask.page/">github.com/circuitrewind/netmask.page</a>
+</div>
 
 <script>
-  const container = document.getElementById('maskContainer');
-  const ipBitContainer = document.getElementById('ipBitContainer');
-  const slider = document.getElementById('maskSlider');
-  const notationEl = document.getElementById('notation');
-  const valueDisplay = document.getElementById('sliderValue');
-  const networkInfoEl = document.getElementById('networkInfo');
+  const ipBits = document.getElementById('ipBits');
+  const maskBits = document.getElementById('maskBits');
+  const slider = document.getElementById('slider');
+  const network = document.getElementById('network');
+  const host = document.getElementById('host');
+  const netmask = document.getElementById('netmask');
+  const cidr = document.getElementById('cidr');
   const ipInput = document.getElementById('ipInput');
 
-  // Build mask bits (32 in groups of 8)
-  for (let g = 0; g < 4; g++) {
-    const group = document.createElement('div');
-    group.className = 'group';
-    group.setAttribute('role', 'presentation');
-    for (let b = 0; b < 8; b++) {
-      const bit = document.createElement('div');
-      bit.className = 'bit';
-      bit.id = 'mask-bit-' + (g * 8 + b);
-      bit.setAttribute('role', 'img');
-      group.appendChild(bit);
-    }
-    container.appendChild(group);
-    if (g < 3) {
-      const sep = document.createElement('div');
-      sep.className = 'group-separator';
-      container.appendChild(sep);
-    }
-  }
-
-  // Build IP bits (32 in groups of 8)
-  for (let g = 0; g < 4; g++) {
-    const group = document.createElement('div');
-    group.className = 'group';
-    group.setAttribute('role', 'presentation');
-    for (let b = 0; b < 8; b++) {
-      const bit = document.createElement('div');
-      bit.className = 'bit';
-      bit.id = 'ip-bit-' + (g * 8 + b);
-      bit.setAttribute('role', 'img');
-      group.appendChild(bit);
-    }
-    ipBitContainer.appendChild(group);
-    if (g < 3) {
-      const sep = document.createElement('div');
-      sep.className = 'group-separator';
-      ipBitContainer.appendChild(sep);
+  function buildBitRow(container, idPrefix) {
+    for (let g = 0; g < 4; g++) {
+      const group = document.createElement('div');
+      group.className = 'group';
+      group.setAttribute('role', 'presentation');
+      for (let b = 0; b < 8; b++) {
+        const bit = document.createElement('div');
+        bit.className = 'bit';
+        bit.id = idPrefix + (g * 8 + b);
+        bit.setAttribute('role', 'img');
+        group.appendChild(bit);
+      }
+      container.appendChild(group);
+      if (g < 3) {
+        const sep = document.createElement('div');
+        sep.className = 'group-separator';
+        container.appendChild(sep);
+      }
     }
   }
 
-  function parsePartialIP(ip) {
+  buildBitRow(maskBits, 'mask-bit-');
+  buildBitRow(ipBits, 'ip-bit-');
+
+  function parseIP(ip) {
     // Returns an array of exactly 32 bits, where -1 means unknown/?
-    const parts = ip.split('.').map(p => p.trim()).filter(p => p.length > 0);
-
-    if (parts.length === 0) return null;
+    const parts = ip.split('.').map(p => p.trim());
 
     const bits = [];
     for (const part of parts) {
       if (bits.length >= 32) break;
 
       const num = parseInt(part, 10);
-      if (isNaN(num)) return null; // non-numeric like "abc"
 
-      if (num < 0 || num > 255) {
-        // Out of range — entire octet is unknown
+      // Out of range — entire octet is unknown
+      if (isNaN(num) ||  (num < 0)  ||  (num > 255)) {
         for (let i = 0; i < 8 && bits.length < 32; i++) {
           bits.push(-1); // -1 = unknown/?
         }
+
       } else {
         for (let i = 7; i >= 0 && bits.length < 32; i--) {
           bits.push((num >> i) & 1);
@@ -351,95 +340,83 @@
       const bit = document.getElementById('mask-bit-' + i);
       if (i < val) {
         bit.textContent = '1';
-        bit.classList.add('active');
+        bit.classList.add('mask-one');
       } else {
         bit.textContent = '0';
-        bit.classList.remove('active');
+        bit.classList.remove('mask-one');
       }
 
       // Mark host bits (bits beyond the mask) — orange for 0s in mask row
       if (i >= val) {
-        bit.classList.add('host');
         bit.classList.add('mask-zero');
       } else {
-        bit.classList.remove('host');
         bit.classList.remove('mask-zero');
       }
     }
 
     // Update IP bits
-    const partial = parsePartialIP(ipInput.value);
-    if (partial) {
-      for (let i = 0; i < 32; i++) {
-        const bit = document.getElementById('ip-bit-' + i);
-        if (partial.bits[i] === -1) {
-          bit.textContent = '?';
-          bit.classList.add('question');
-          bit.classList.remove('host');
-          bit.classList.remove('network');
-        } else {
-          bit.textContent = partial.bits[i];
-          bit.classList.remove('question');
-
-          if (i >= val) {
-            bit.classList.add('host');
-            bit.classList.remove('network');
-          } else {
-            bit.classList.add('network');
-            bit.classList.remove('host');
-          }
-        }
-      }
-
-      // Build the mask bit array (1s for network, 0s for host)
-      const maskBits = [];
-      for (let i = 0; i < 32; i++) {
-        maskBits.push(i < val ? 1 : 0);
-      }
-
-      // Network = IP AND mask, Host = IP AND NOT mask (skip -1 bits)
-      const netBits = [];
-      const hostBits = [];
-      for (let i = 0; i < partial.bits.length; i++) {
-        if (partial.bits[i] === -1) {
-          netBits.push(-1);
-          hostBits.push(-1);
-        } else {
-          netBits.push(partial.bits[i] & maskBits[i]);
-          hostBits.push(partial.bits[i] & (1 - maskBits[i]));
-        }
-      }
-
-      // Show the netmask (all 1s for network bits, all 0s for host bits)
-      const maskOctets = [];
-      for (let o = 0; o < 4; o++) {
-        let maskByte = 0;
-        for (let b = 0; b < 8; b++) {
-          const bitIndex = o * 8 + b;
-          if (bitIndex < val) {
-            maskByte |= (1 << (7 - b));
-          }
-        }
-        maskOctets.push(maskByte);
-      }
-
-      notationEl.textContent = 'Netmask: ' + octetsToIP(maskOctets);
-
-      networkInfoEl.innerHTML =
-        '<span class="label net-label">Network: ' + bitsToIP(netBits, netBits) + '</span>' +
-        '<span class="label host-label">Host: ' + bitsToIP(hostBits, hostBits) + '</span>';
-    } else {
-      // Nothing parseable — show ? for all bits
-      for (let i = 0; i < 32; i++) {
-        const bit = document.getElementById('ip-bit-' + i);
+    const partial = parseIP(ipInput.value);
+    for (let i = 0; i < 32; i++) {
+      const bit = document.getElementById('ip-bit-' + i);
+      
+      if (partial.bits[i] === -1) {
         bit.textContent = '?';
         bit.classList.add('question');
+        bit.classList.remove('host');
+        bit.classList.remove('network');
+        bit.setAttribute('aria-label', 'IP bit: ?')
+        
+      } else {
+        bit.textContent = partial.bits[i];
+        bit.classList.remove('question');
+        bit.setAttribute('aria-label', 'IP bit: ' + partial.bits[i]);
+
+        if (i >= val) {
+          bit.classList.add('host');
+          bit.classList.remove('network');
+        } else {
+          bit.classList.add('network');
+          bit.classList.remove('host');
+        }
       }
-      notationEl.textContent = '—';
-      networkInfoEl.innerHTML = '';
     }
 
-    valueDisplay.textContent = 'CIDR: /' + val;
+    // Build the mask bit array (1s for network, 0s for host)
+    const maskBits = [];
+    for (let i = 0; i < 32; i++) {
+      maskBits.push(i < val ? 1 : 0);
+    }
+
+    // Network = IP AND mask, Host = IP AND NOT mask (skip -1 bits)
+    const netBits = [];
+    const hostBits = [];
+    for (let i = 0; i < partial.bits.length; i++) {
+      if (partial.bits[i] === -1) {
+        netBits.push(-1);
+        hostBits.push(-1);
+      } else {
+        netBits.push(partial.bits[i] & maskBits[i]);
+        hostBits.push(partial.bits[i] & (1 - maskBits[i]));
+      }
+    }
+
+    // Show the netmask (all 1s for network bits, all 0s for host bits)
+    const maskOctets = [];
+    for (let o = 0; o < 4; o++) {
+      let maskByte = 0;
+      for (let b = 0; b < 8; b++) {
+        const bitIndex = o * 8 + b;
+        if (bitIndex < val) {
+          maskByte |= (1 << (7 - b));
+        }
+      }
+      maskOctets.push(maskByte);
+    }
+
+    netmask.textContent = octetsToIP(maskOctets);
+    network.textContent = bitsToIP(netBits, netBits);
+    host.textContent    = bitsToIP(hostBits, hostBits);
+    cidr.textContent    = val;
 
     // Update slider aria-valuenow
     slider.setAttribute('aria-valuenow', val);
@@ -449,16 +426,6 @@
       const maskBit = document.getElementById('mask-bit-' + i);
       if (maskBit) {
         maskBit.setAttribute('aria-label', 'Mask bit ' + i + ': ' + (i < val ? '1' : '0'));
-      }
-    }
-
-    const ipBits = parsePartialIP(ipInput.value);
-    if (ipBits) {
-      for (let i = 0; i < 32; i++) {
-        const ipBit = document.getElementById('ip-bit-' + i);
-        if (ipBit) {
-          ipBit.setAttribute('aria-label', 'IP bit ' + i + ': ' + (ipBits.bits[i] === -1 ? '?' : ipBits.bits[i]));
-        }
       }
     }
   }
